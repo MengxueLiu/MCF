@@ -1,0 +1,221 @@
+\documentclass[onecolumn,11pt,journal, compsoc]{IEEEtran}
+
+\usepackage{anysize}
+\marginsize{1.25in}{1.25in}{1.0in}{1.0in}
+\usepackage{algorithm,algorithmic}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{graphicx} 
+\usepackage{subfigure}
+\usepackage{enumitem}
+\usepackage{ctable}
+\usepackage{amssymb,amsmath}
+\usepackage{cite}
+\usepackage{subfigure}
+\usepackage{wrapfig}
+\usepackage{epstopdf,epsfig}
+\usepackage{amsmath}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\newenvironment{proof}[1][Proof]{\begin{trivlist}
+		\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{definition}[1][Definition]{\begin{trivlist}
+		\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{example}[1][Example]{\begin{trivlist}
+		\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{remark}[1][Remark]{\begin{trivlist}
+		\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+
+\newcommand{\qed}{\nobreak \ifvmode \relax \else
+	\ifdim\lastskip<1.5em \hskip-\lastskip
+	\hskip1.5em plus0em minus0.5em \fi \nobreak
+	\vrule height0.75em width0.5em depth0.25em\fi}
+
+\newcommand*{\QEDB}{\hfill\ensuremath{\square}}%
+
+
+\begin{document}
+
+	Given a set of files $\mathcal F = \{F_1, ..., F_n\}$ with equal size $s$, where $s$ is the number of packets in $F_i$, and we generate $s_g = (1+\theta)s$ packets where $\theta \in [0, 1] $ . We represent each file $F_i \in \mathcal F$ as a node $F_i=<s_i, d_i, Generate_i>$ where $s_i, d_i$ denote the source and destination for that file and $Generate_i$ is the time when the file is generated. For each node $F_i=<s_i, d_i, Generate_i>$, we add a virtual source node $sv_i$ having an edge with capacity $s_g$ into file node $F_i$. And we add a virtual destination node $dv_i$ having an incoming edge of infinite capacity from all the connection nodes which contain $d_i$ as destinations. In this way we can model this problem as multi-commodity flow problem with $n$ different kinds of commodities with $n$ source and destination pairs of $(sv_i, dv_i)$. Assume that all commodity can be fully fractionally delivered alone, which means each commodity can always be delivered in the form of splittable packets in the absence of other commodities.
+	
+	
+	\textbf{Formulation 1}: Maximize the total number of files that can be successfully decoded.
+	
+	Let $\lambda \in [0, 1], \lambda << \theta$ be the threshold percentage for each file to be successfully decoded, which means if $s_r = (1+\lambda)s$ packets can be delivered to destination, file $F_i$ can be treated as successfully delivered. We use a variable $f_i$ to represent whether or not $F_i$ is successfully delivered. For the sake of simplicity, we rescale each file and edge capacity in the network by $s_r$ so that this problem thus becomes an unit flow multi-commodity problem.
+	
+	\begin{equation}
+		\begin{aligned}
+			\text{Input: Directed Connection Graph } &G(V, E), \text{File set } \mathcal{F} \text{ with } n \text{ files} \\
+			\text{Source-sink~pair }&(sv_i, dv_i) \text{ and threshold }\lambda, ~\forall F_i \in \mathcal{F} \\
+			\text{ Capacity }&c(u, v) ~~~~\forall (u, v)\in E \\
+			\text{Variable: Flow } &f_{i, (u, v)} ~~~~~~\forall F_i \in \mathcal{F}, (u, v) \in E \\
+			&f_i  ~~~~~~~~~~~~~\forall F_i \in \mathcal{F} \\
+			\text{Maximize } &\sum_{i=1}^{n}f_i \\ 
+			\text{Subject to } &\sum_{(sv_i,v) \in E}f_{i, (sv_i,v)} = f_i,  ~~~~~~~~~~~~\forall F_i \in \mathcal{F} \\
+			&\sum_{(u, v) \in E}f_{i,(u, v)} = \sum_{(v, u) \in E}f_{v, u}^i,  ~~\forall F_i \in \mathcal{F}, \forall v \in V - \{sv_i,dv_i\} \\ 
+			&\sum_{i=1}^{f}f_{i,(u, v)} \leq c_{(u, v)}, ~~~~~~~~~~~~~~~~\forall (u, v) \in E \\
+			&f_{(u, v)}^i \geq 0, ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\forall F_i \in \mathcal{F},  \forall (u, v) \in E \\
+			&f_i \in \{0, 1\} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\forall F_i \in \mathcal{F}
+		\end{aligned}
+	\end{equation}
+	
+\newpage
+	
+		 \begin{algorithm}[t]
+		 	\small
+		 	\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+		 	\renewcommand\algorithmicensure {\textbf{Output:} }
+		 	\caption{Random Rounding Algorithm for Formulation 1}
+		 	\label{alg:randomrounding}
+		 	\begin{algorithmic}[1] %Every Line has Number Label
+		 		\REQUIRE ~~\\ %Input
+		 		Directed Connection Graph $G(V, E)$;\\
+		 		File set $F = \{F_1, ..., F_n\}$;\\
+		 		Source-sink pair $(sv_i, dv_i)$ and threshold $\lambda$ associated for each $ F_i \in F$;\\
+		 		Capacity $c(u, v), ~ \forall (u, v)\in E$;\\
+		 		\ENSURE ~~ $OPT_{ALG}$\\ 
+%		 		\STATE Divide all edge capacities by $1+\epsilon$, where $\epsilon  \in [0, 1]$, i.e., $\tilde{c_e} = \frac{c_e}{(1+\epsilon)}$;
+		 		\STATE Change the last constraint to be 
+		 		$0 \leq f_i \leq 1$;
+		 		\STATE Then it is relaxed to an LP, solve this LP and get optimal solution $\tilde{f_i}$;
+		 		\STATE With probability $\tilde{f_i}$, set $f_i = 1$, otherwise set it to $0$;
+		 		\STATE Scale up the fractional flow $\tilde{f_{i,e}}$ from the LP solution on edge $e$ for commodity $i$ by $\frac{1}{\tilde{f_i}}$, i.e., $f_{i,e} = \tilde{f_{i,e}} \times \frac{1}{\tilde{f_i}}$;
+
+		 	\end{algorithmic}
+		 \end{algorithm}
+	
+	
+	
+Let $OPT_i$ be the optimal solution of the IP in Formulation 1, and let $OPT_f$ be the total amount commodities delivered by solving the linear relaxation LP of IP in Formulation 1 where the variables $f_i$ are relaxed to assume any value in $[0, 1]$. It is obvious to see that $OPT_f = \sum{\tilde{f_i}}$. Define the solution from the above algorithm as $ALG$, and total amount of commodities delivered by $ALG$ as $OPT_{ALG}$. 
+
+We use Chernoff Bound over continuous random variables to bound the probability of achieving a fraction of the optimal solution.
+
+\textbf{Fact 1} (Chernoff-Bound)\label{CB} . Let $X=\sum_{i=1}^{n}X_i$ be a sum of n independent random variables $X_i \in [0,1], 1\le i \le n$. Then $P(X<(1-\epsilon) \cdot E(X)) \le exp(-\epsilon^2 \cdot E(X)/2)$ holds for $0 < \epsilon < 1$.
+
+Since we have already scaled down the flow by $s_r$, thus the variables are between 0 and 1 so that we can apply the above Chernoff Bound.
+
+\vspace*{0.15in}
+\textbf{Claim 2}. $Pr[OPT_{ALG} < (1-\epsilon) \cdot OPT_f] \le e^{-\epsilon^2 \cdot OPT_f / 2}$ 
+\vspace*{0.15in}
+
+\textbf{Proof}: For each commodity $i$, the expectation of $f_i$ is $E(f_i) = 1 \cdot \tilde{f_i} + 0 \cdot (1-\tilde{f_i}) = \tilde{f_i}$. Recall that $OPT_f = \sum{\tilde{f_i}} $, and let $OPT_{ALG} = \sum{f_i}$.
+
+\begin{eqnarray} \label{OPTALG}
+Pr[OPT_{ALG}  < (1-\epsilon) \cdot OPT_f] &=& Pr[\sum{f_i} < (1-\epsilon) \cdot OPT_f] \\ \nonumber
+&\le& e^{-\epsilon^2 \cdot OPT_f / 2}  \,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\QEDB \nonumber
+\end{eqnarray}
+
+ Since we also assume that all commodity can be fully fractionally delivered alone, therefore, we get:
+
+\begin{equation} \label{OPTF}
+	OPT_{f} \ge 1
+\end{equation}
+
+Since we have proved that the optimal fractional solution is an upper bound of optimal solution from ILP problem, by taking $\epsilon = 2/3$ in the Chernoff Bound, we get, 
+
+\textbf{Theorem 3}. The probability of achieving less than 1/3 of the profit of an optimal solution is upper bounded by $e^{-2/15} \approx 0.87$.
+
+\textbf{Proof}.
+By taking $\epsilon = 2/3$, Equation \ref{OPTALG} becomes:
+
+\begin{eqnarray}
+	Pr[OPT_{ALG}  < \frac{1}{3} \cdot OPT_f] &\le& e^{-(\frac{2}{3})^2 \cdot OPT_f / 2} \\
+	&=& e^{-2 \cdot OPT_f/9}
+\end{eqnarray}
+
+By Equation \ref{OPTF}, we know that the minimum value of $OPT_f$ is 1, by taking $OPT_f = 1$, we get the upper bound of $e^{-\epsilon^2 \cdot OPT_f / 2}$. Therefore,
+
+\begin{equation}
+Pr[OPT_{ALG}  < \frac{1}{3} \cdot OPT_f] \le e^{-2/9}
+\end{equation}
+
+Since $OPT_i \le OPT_f$, thus we get, 
+\begin{equation}
+	Pr[OPT_{ALG}  < \frac{1}{3} \cdot OPT_i] \le e^{-2/9}
+	\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\QEDB \nonumber
+\end{equation}
+
+
+%If $OPT_f \cdot d > c_{min}$, where $d$ is the file size. Therefore, $OPT_f > \frac{c_{min}}{d} \ge \epsilon^{-2} \cdot n|E|$.  Then, $Pr[OPT_{ALG}  \ge \frac{1-\epsilon}{1+\epsilon} \cdot OPT_f]$ is at least $1-\frac{1}{poly(|E|)}$.
+
+%If $OPT_f \ge \alpha \cdot \ln f$, then, $Pr[OPT_{ALG}  \ge \frac{1-\epsilon}{1+\epsilon} \cdot OPT_f]$ is at least $1-\frac{1}{poly(f)}$.
+%
+%If $OPT_f < \alpha \cdot \ln f$, then, $OPT_{ALG} < \alpha \cdot \ln f$, even if we get 0 file, we are off from $OPT_f$ by no more than $\alpha \cdot \ln f$ additive factor. Putting it all together, with probability $1-\frac{1}{poly(f)}$, we get at least $\max\{0, (1-\epsilon)/(1+\epsilon) \cdot OPT_f - \alpha \ln f\}$.
+
+\vspace*{0.15in}
+\textbf{Claim 4} Given a single edge, choose $\epsilon'$ such that $\max \frac{\tilde{f_{i,e}}}{\tilde{f_{i,e}}} \le \epsilon'$ .The probability that ALG exceeds the edge capacity constraint by a factor of $\gamma = (1+\epsilon' \cdot \sqrt{2\log|V|\Delta_F})$ is bounded by $|V|^{-4}$
+\vspace*{0.15in}
+
+We analyze the probability that our algorithm violates capacity constraints by a certain factor, we employ Hoeffding's Inequality 
+
+\textbf{Fact 5} (Hoeffding's Inequality)\cite{Devdatt} . Let $\{X_i\}$ be independent random variables, s.t. $X_i \in [a_i, b_i]$, then $Pr(\sum_{i}X_i - E(\sum_{i}X_i ) \ge t) \le exp(-2t^2 / \sum_{i}(b_i-a_i)^2 )$ holds.
+
+Proof: Fix an edge $e \in E$, for commodity $i$, with probability $1-\tilde{f_i}$, the flow on edge $e$ for commodity $i$ is set to 0, i.e., $f_{i,e}=0$, with probability $\tilde{f_i}$, the flow on edge $e$ for commodity $i$ is set to $\tilde{f_{i,e}} \cdot \frac{1}{\tilde{f_i}}$. Let $\Delta_F$ be the number of files going through edge $e$. 
+
+Then the expectation of $f_{i,e}$ is 
+\begin{equation}
+E(f_{i,e}) = \tilde{f_{i,e}} \cdot \frac{1}{\tilde{f_i}} \cdot  \tilde{f_i}+ 0 \cdot (1-\tilde{f_i}) = \tilde{f_{i,e}}
+\end{equation}
+
+Let $F_e$ denotes the flow on edge $e$ by $ALG$, then $F_e = \sum_{i, f_{i,e} \neq 0}{f_{i,e}}$ and the expectation of $F_e$ is 
+\begin{equation} \label{expect}
+E[F_e] = \sum_{i, f_{i,e} \neq 0}\tilde{f_{i,e}} \cdot \frac{1}{\tilde{f_i}} \cdot  \tilde{f_i} = \sum_{i, f_{i,e} \neq 0}\tilde{f_{i,e}}
+\end{equation}
+
+%Let $\epsilon' = \frac{\epsilon}{\sqrt{2\log|V|\Delta_F}}$, since $\tilde{f_{i,e}} \ge \frac{1}{s}$, and $\tilde{f_{i,e}} \le \tilde{c_e}$, therefore, 
+%\begin{equation} \label{e3}
+%	\frac{\tilde{f_{i,e}}}{\tilde{f_{i,e}}} \le s \cdot \tilde{c_e},
+%\end{equation}
+%since we choose $\epsilon \ge s \cdot \sqrt{2\log|V|f}$, and $f \ge \Delta_F$ thus, 
+%\begin{equation}\label{e4}
+%\epsilon' = \frac{\epsilon}{\sqrt{2\log|V|\Delta_F}} \ge \frac{s \cdot \sqrt{2\log|V|f}}{\sqrt{2\log|V|\Delta_F}} \ge s
+%\end{equation}
+%Given \ref{e3} and \ref{e4}, we can get
+%\begin{equation}
+%	\frac{\tilde{f_{i,e}}}{\tilde{f_{i,e}}} \le \epsilon' \cdot \tilde{c_e},
+%\end{equation}
+
+
+Let $t=\epsilon' \cdot \sqrt{2\log|V|\Delta_F}$, by applying Hoeffding's Inequality, we get,
+	
+\begin{eqnarray}
+Pr[F_e - E(F_e) \ge t] &\le& exp(\frac{-2t^2}{\sum_{i}(\frac{\tilde{f_{i,e}}}{\tilde{f_{i,e}}})^2}) \\
+&\le& exp(\frac{-2 \cdot \epsilon'^2 \cdot \log|V| \cdot \Delta_F}{\epsilon'^2 \cdot\Delta_F}) \\
+&=& |V|^{-4}
+\end{eqnarray}
+
+
+Given Equation \ref{expect}, and let $\gamma = (1+\epsilon' \cdot \sqrt{2\log|V|\Delta_F})/ (1+\epsilon)$,
+\begin{eqnarray}
+	&&Pr[F_e - \tilde{c_e} \ge \epsilon' \cdot \sqrt{2\log|V|\Delta_F}] \\
+	&=& Pr[F_e \ge (1+\epsilon' \cdot \sqrt{2\log|V|\Delta_F})] \\
+	&=& Pr[F_e \ge \gamma \cdot c_e] \\
+	&\le& |V|^{-4}
+\end{eqnarray}
+
+%Let $X_j = \frac{f_{j,e}}{d}$, then, $F(e) \ge (1+\epsilon) \cdot \tilde{c_e}$ iff
+%
+%$\sum_{j, f_{j,e} \neq 0}X_j \ge (1+\epsilon) \cdot \frac{\tilde{c_e}}{d}$.  
+%Therefore, 
+%$Pr[F(e) \ge (1+\epsilon) \cdot \tilde{c_e}] \le e^{-\beta(\epsilon) \cdot \tilde{
+%c_e}/d}$. By scaling up the capacities by $\epsilon$, i.e., $c_e = (1+\epsilon) \cdot \tilde{c_e}$, and $\beta(\epsilon) \ge \frac{2 \epsilon^2}{4.2+\epsilon}$, and by assumption $\tilde{c_e}/d \ge \frac{4.2+\epsilon}{\epsilon^2} \cdot ln|E| $, we have  $Pr[F(e) \ge c_e] \le \frac{1}{|E|^2}$. 
+
+There are at most $|V|^2$ edges, by applying union bound over all edges using Claim 4, we can get that the probability that ALG exceeds any of the edge capacity constraints by a factor of $\gamma = (1+\epsilon' \cdot \sqrt{2\log|V|\Delta_F})$ is upper bounded by $|V|^{-2}$.
+
+
+
+
+
+\end{document}
+
+\bibliographystyle{alpha}
+\begin{thebibliography}
+
+\bibitem{Devdatt} Devdatt P. Dubhashi, Alessandro Panconesi:
+Concentration of Measure for the Analysis of Randomized Algorithms. Cambridge University Press 2009, ISBN 978-0-521-88427-3, pp. I-XIV, 1-196
+
+\end{thebibliography}
