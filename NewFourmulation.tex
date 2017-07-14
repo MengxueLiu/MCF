@@ -117,7 +117,7 @@ Pr[OPT_{ALG}  < (1-\epsilon) \cdot OPT_f] &=& Pr[\sum{f_i} < (1-\epsilon) \cdot 
 
 Since we have proved that the optimal fractional solution is an upper bound of optimal solution from ILP problem, by taking $\epsilon = 2/3$ in the Chernoff Bound, we get, 
 
-\textbf{Theorem 3}. The probability of achieving less than 1/3 of the profit of an optimal solution is upper bounded by $e^{-2/15} \approx 0.87$.
+\textbf{Theorem 3}. The probability of achieving less than 1/3 of the profit of an optimal solution is upper bounded by $e^{-2/9} \approx 0.8007$.
 
 \textbf{Proof}.
 By taking $\epsilon = 2/3$, Equation \ref{OPTALG} becomes:
@@ -208,6 +208,28 @@ There are at most $|V|^2$ edges, by applying union bound over all edges using Cl
 
 
 
+\section{Related Work}
+
+In the recent years, MCFP has drawn significant attention from the researcher community and has been extensively studied. In \cite{1}, the authors presented a poly-logarithmic approximation method for the Edge-Disjoint Paths with Congestion problem in an undirected graph, it is a more generalized proble than classic Edge-Disjoint Paths problem (EDP) when the congestion constant is larger than 1, the authors gave an O(poly log k)-approximation algorithm for EDPwC with congestion c = 2.  Later on in \cite{6}, the authors presented a (polylog(n), poly(log log n))-approximation with congestion 1, and in \cite{7}, the author proposed a randomized O(n3/7 poly (log n))-approximation algorithm with congestion two. 
+
+In \cite{2}, the authors studied Maximum Node Disjoint Paths problem (MNDP) with congestion also in an undirected graph, and a polynomial time algorithm is proposed to route $\omega(OPT/poly log k)$ pairs with constant congestion. 
+
+The MCFP problem is a generalized maximum edge-disjoint paths problem, where it does not require integral flows for the source sink pairs. MCFP is a well known APX-hard even in the case of the underlying graph is a tree, and there existing a 2-approximation for tree. In \cite{3}, the authors proposed an $O(1)$ approximation algorithm for the all-or-nothing multicommodity flow problem in planar graphs, and also proved that the integrality gap is $O(1)$.
+
+
+In \cite{4}, the authors studied the multicommodity flow and cut problem in polymatroidal networks, where there are submodular capacity constraints on the edges incident to a node. The underlying graph could be either directed or undirected, by analyzing the dual of the flow relaxations via continuous extensions of the Lovász extension. 
+
+Several other applications also involve the MCFP, such as \cite{5}, solve the MCFP to help for designing route networks for container ships, in particular, the authors studied the MCFP with transit time constraints and proved that including time constraints does not necessarily increase the computational time. 
+
+
+In \cite{8}, the authors also studied the undirected EDP problem but with a moderate restriction on graph connectivity, it requires global minimum cut of G to be $\Omega(\log^5n)$ so that the algorithm can be applied to graphs with high diameters and asymptotically large minors.
+
+
+
+
+
+
+
 
 
 \end{document}
@@ -217,5 +239,31 @@ There are at most $|V|^2$ edges, by applying union bound over all edges using Cl
 
 \bibitem{Devdatt} Devdatt P. Dubhashi, Alessandro Panconesi:
 Concentration of Measure for the Analysis of Randomized Algorithms. Cambridge University Press 2009, ISBN 978-0-521-88427-3, pp. I-XIV, 1-196
+
+\bibitem{1} A Polylogarithmic Approximation Algorithm for Edge-Disjoint Paths with Congestion 2
+
+\bibitem{2} Poly-logarithmic Approximation for Maximum Node Disjoint Paths
+with Constant Congestion
+
+\bibitem{3} Routing in undirected graphs with constant congestion
+
+\bibitem{4} Multicommodity Flows and Cuts in Polymatroidal Networks
+
+\bibitem{5} The time constrained multi-commodity network flow problem and its application to liner shipping network design.
+
+\bibitem{6} Approximation Algorithms for the Edge-Disjoint Paths Problem via
+Racke Decompositions .
+
+\bibitem{7} Breaking o(n1/2)-approximation algorithms for the edge-disjoint paths problem with congestion two
+
+\bibitem{8} Edge Disjoint Paths in Moderately Connected Graphs
+
+\bibitem{9} Large-treewidth graph decompositions and applications
+
+\bibitem{10} Near-optimal hardness results and approximation algorithms for edge-disjoint paths and related problems
+
+\bibitem{11} Approximation Algorithms for the Unsplittable Flow Problem
+
+\bibitem{12} Chekuri, Chandra, Sanjeev Khanna, and F. Bruce Shepherd. "The all-or-nothing multicommodity flow problem." SIAM Journal on Computing 42.4 (2013): 1467-1493.
 
 \end{thebibliography}
