@@ -1,0 +1,435 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{algorithm,algorithmic}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{xspace}
+\usepackage{amssymb,amsmath}
+\usepackage{epstopdf}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{color}
+
+\usepackage[square, comma, sort&compress, numbers]{natbib}%the bib in a same bracket
+\usepackage[top=0.75in, bottom=1in, left=0.625in, right=0.625in]{geometry}
+
+\newcommand{\NEW}[1]{\textcolor{cyan}{#1}}
+\newcommand{\TODO}[1]{\textcolor{red}{(#1)}}
+\newenvironment{new}{\color{cyan}}{\color{black}}
+
+\def\PS{\mbox{\sl PS}}
+\newcommand{\ignore}[1]{}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\newcommand*{\QEDB}{\hfill\ensuremath{\square}}%
+
+\newenvironment{proof}[1][Proof]{\begin{trivlist}
+		\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{definition}[1][Definition]{\begin{trivlist}
+		\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{example}[1][Example]{\begin{trivlist}
+		\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{remark}[1][Remark]{\begin{trivlist}
+		\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+
+
+\title{Multicommodity Flow on Connection Graph in Time Schedule Networks
+\thanks{This work is supported in part by the NSF under Awards CCF-1422603 and CCF-1637393.}} 
+
+
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+	
+Many real world scenarios such as boat or bus transportation networks, include fixed time schedules of moving nodes (boats or buses), and these nodes strictly follow their schedules and move within the given network. Given the successful development of IoT devices, it is much easier to transfer data among nodes with less energy consumption, as well as less delivery latency. This provides a way to use the nodes as data mules and deliver data from place to place and take advantage of these predefined schedules if the underlying network could be delay tolerant. However, since the buffer sizes and the contact time period of nodes are limited, it is difficult to get everything delivered to destinations due to the small capacity of the opportunistic connection. In order to maximize the data that could be delivered in the network, 
+data with less probability of being fully delivered could be ignored so that it makes room for data with higher delivery probability (so that the original whole data could be restored). 
+
+In this paper, we first proposed a connection graph model that can be used to describe the connectivity among moving nodes that have time schedules over time. Given their movement schedules, a time expanded contact opportunistic network could be obtained. Secondly, we proposed an all-or-nothing splittable multi-commodity formulation model data delivery in the connection graph and maximize data delivery, and furthermore, we present a polynomial time approximation algorithm using randomized rounding based approach that can achieve  constant approximation ratio of optimal solution and poly-logarithmic congestion with high probability.
+
+\end{abstract}
+
+
+\section{Introduction}
+We consider the scenario where there is an underlying Delay Tolerant Network (DTN) consisting of a set of moving nodes and a set of stationary nodes. Each moving node has a predefined route and time schedule that it will strictly follow. Moving nodes are also equipped with wireless communication devices, which can be used for data transmission. Stationary nodes are  stations that moving nodes can stop by, upload and download data from, and only few of these stationary nodes can be connected to Internet, which are called Hotspots. Such scenarios are frequently seen in other researches, such as \cite{BurgessGJL06,AcerGHNT12,LiuJAERC15}. Furthermore, the similar concept is also widely seen in the social networks, a specific type DTN is call Mobile Social Networks, where the moving nodes are people, stationary nodes could be classrooms, restaurants, shopping malls,etc. 
+
+Since in these networks, the network structure is dynamic in time, traditional max flow methods cannot be directly applied, we need to modify it into a static graph model so that we could calculate the optimal data delivery. Moreover, in these networks, end-to-end paths are usually unstable, and hence the nodes need to employ the ``store, carry and forward" strategy in order to deliver the data from source to destination. However, if the schedules of these moving nodes are known ahead of time, we can actually take advantage of these knowledge and make smart decisions on choosing the data to be delivered and the routes of data without violating capacity constraints and time schedules.
+
+%Realizing these challenges, we propose a connection graph model and develop a randomized rounding based algorithm to solve the All or Nothing splittable multicommodity flow problem efficiently and effectively. The main contributions of this paper are three-fold:
+
+Realizing these challenges, we develop a randomized rounding based algorithm to solve the All or Nothing splittable multicommodity flow problem in directed graph efficiently and effectively. The main contributions of this paper are three-fold:
+
+\begin{itemize}
+
+\item We present a standard ILP formulation for the All or Nothing splittable multicommodity flow problem in directed graph. (Section~\ref{sec:proposed})
+
+\item We then developed a randomized rounding based approach that can ensure a constant  approximation ratio with high probability so that the multicommodity flow problem can be solved efficiently in polynomial time with poly-logarithmic congestion.
+
+%\item We present the {\em connection graph model}, based on the regular connections between moving nodes and stationary nodes, which transforms the original dynamic node network into a contact based connectivity graph. (Section~\ref{sec:graphmodel})
+
+\end{itemize}
+
+The remainder of the paper is organized as follows: in Section~\ref{sec:relatedwork}, we introduce some background information related to the network model, and also some of most recent work on multicommodity flow problem. In Section \ref{sec:proposed}, we derive an ILP formulation of the All-or-Nothing splittable multicommodity problem with the randomized rounding based approach to solve the problem in polynomial time. For the experiments, to use the real world dataset, we present the connection graph model in Sections~\ref{sec:graphmodel}, which transforms the original dynamic node network into a contact based connectivity graph, and Section \ref{sec:concl} concludes our work.
+
+
+\section{Related Work} \label{sec:relatedwork}
+In this section, we review the literature on different models and routing algorithms.
+
+In the recent years, MultiCommodity Flow Problem (MCFP) has drawn significant attention from the researcher community and has been extensively studied. In this multicommodity flow field there are two well-studied optimization problems: the Maximum Edge Disjoint Paths (MEDP) and the All-or-Nothing Flow (ANF) problem and they are both NP-hard problems. 
+In MEDP, it is is a well known APX-hard even in the case of the underlying graph is a tree, and there existing a 2-approximation for tree. In \cite{Chuzhoy12a}, the authors proposed an $O(1)$ approximation algorithm for the all-or-nothing multi-commodity flow problem in planar graphs, and also proved that the integrality gap is $O(1)$. In \cite{ChekuriKRV15}, the authors studied the multicommodity flow and cut problem in polymatroidal networks, where there are submodular capacity constraints on the edges incident to a node. The underlying graph could be either directed or undirected, by analyzing the dual of the flow relaxations via continuous extensions of the Lov\'asz extension. 
+In ANF, usually viewed as a relaxed version of MEDP, the goal is to select a largest subset of commodities that can be simultaneously fractionally routed from source to destination with regard to capacity constraints, whereas in MEDP the flow needs to be integral since the goal is find maximum number of edge disjoint paths.
+
+Over the last decade there are several non-trivial existing work about ANF, which are closely related to our work. The study of Symmetric All or Nothing Flow problem (SymANF) in directed graphs with symmetric demand pairs is initiated in \cite{ChekuriE15}. In SymANF, the input pairs are unordered and a pair $(s_i, t_i)$ is routed only if both the ordered pairs $(s_i, t_i)$ and $(t_i, s_i)$ are routed, and the goal is to find a maximum subset of the given demand pairs that can be routed. The authors provide a poly-logarithmic approximation with constant congestion for SymANF, by extending the well-linked decomposition framework of \cite{ChekuriKS05} to the directed graph setting with symmetric demand pairs. However, their results depend on a more restricted assumption of unit capacity constraint and unit demand. Our work differs from them with a more general setting and our result of constant approximation with poly-logarithmic congestion is not directly comparable to theirs.
+
+
+Several other applications also involve the MCFP, such as \cite{Christian15}, solve the MCFP to help for designing route networks for container ships, in particular, the authors studied the MCFP with transit time constraints and proved that including time constraints does not necessarily increase the computational time. 
+
+
+
+
+\ignore{
+\section{The Connection Graph Model} \label{sec:graphmodel}
+
+In this section,we present our {\em connection graph model} whose nodes correspond to the moving and stationary nodes connections in the original network.
+
+Denote by $\cal B$=$\{B_1,B_2,B_3, ... ,B_m\}$ and $\cal P$=$\{P_1,P_2,P_3, ... ,P_n\}$ the sets of $m$ moving nodes (MN) and the set of $n$ stationary nodes (SN) in the original network, respectively. We assume both the MNs and the SNs have infinite buffer sizes\footnote{A reasonable assumption, given the ever-dropping costs of memory and also the much more stringent data transmission bottlenecks due to MN to MN transmission while in transit.}. Let $DP_{B_i}$ be the time schedule associated with each MN $B_i$, which describes the paths and times to arrive and depart the SNs (we assume that each MN has full knowledge of its own time schedule). A connection is established between two MNs $B_i$ and $B_j$ at time $t$ if and only if their geographical distance is within a certain constant range $r_{i,j,t}$ at time $t$. Note that the ranges $r_{i,j,t}$ may be all different depending on the particular MN and the time (which also determine location) of the connection. However, without loss of generality and for ease of explanation, we will assume that $r_{i,j,t}=r$, for all $i,j,t$.  Given also the sparsity of our network scenario, we will ignore considerations of interference of the wireless signal in this work, but we do assume that all communications are half-duplex (i.e., a node can either transmit or receive at a time). Hence a connection exists between $B_i$ and $B_j$ at time $t$ if and only if: $\sqrt{(x_i - x_j)^2 + (y_i - y_j)^2} \leq r$, where $(x_z,y_z)$ are the coordinates of the respective $B_z$ and $(x_j,y_j)$ at time $t$. We also assume that we have a set of $f$ commodities $\cal F$=$\{F_1,F_2, ... ,F_f \}$, which can be transferred through senders and receivers equipped on the NMs and SNs when a connection is established. Based on this observation, we transform our original CoDPON network into a {\em connection graph}, which we introduce in the next section.
+
+Based on the original MNs time schedules, we can then determine all MNs and SNs connections $\cal C$=$\{C_1,C_2,C_3, ... ,C_k\}$ where $k \leq cm(m+n)$ and $c$ is a constant. We can represent each connection $C_i$ as a 4-tuple $<A_i, B_i, Up_i, Down_i>$, where $A_i$ and $B_i$ are the two objects ( either a MN or SN) that establish this connection, $Up_i$ is the starting time of the connection, and $Down_i$ is the ending time of the connection.
+
+We construct the directed connection graph using the above connections and commodity as nodes, therefore the node set is $V = {\cal C} \cup {\cal F}$ and $|V|=(k+f)$. A directed edge exists from connection node $C_x$ to connection node $C_y$ if and only if the two connections share a common object and $Up_x \le Down_y$. For example, there is an edge from a connection node $<1, 2, 300, 400>$ to a connection node $<2, 5, 500, 600>$ since they share the common object $2$ and $300 \le 600$. The capacity of an edge $e_i=(C_x,C_y)$ is defined as
+\begin{equation}
+	Cap_{e_i} = min\{M(A_x,B_x),M(A_y,B_y)\}
+\end{equation}
+where $M(A_x,B_x) = L(C_x) \cdot v$,  $v$ is the data transfer speed (we assume it to be a constant in the absence of decent weather conditions), and $L(C_x)=Down_x-Up_x$ is the lifetime of $C_x$. 
+
+When two connections with at least one object in common overlap in time, we will take a conservative approach and assume that overlapping transmissions from two respective connections collide (generate interference) and hence that during the overlap time no successful transmissions occur for these connections. Hence, whenever two connections that share an object overlap, we will not count the overlap time when computing the capacity of the edge between them.
+
+Now we consider the edges in the graph between a commodity node and a connection node. We represent each commodity $F_k$ as a node $F_k=<p_k,Generate_k>$, where $p_k$ is the SN of the respective community where $F_k$ was generated, and $Generate_k$ is the time when $F_k$  was generated. There will be an edge from $F_k$ to connection node $C_x=<A_x, B_x, Up_x, Down_x>$ if and only if $p_k = A_x$ or $p_k = B_x$, and $Generate_k \leq Down_x$. The capacity of a data-connection edge $(F_k,C_x)$ is calculated as:
+
+\begin{equation}
+	Cap_{(F_k,C_x)} = min \{FileSize, (Down_x-Generate_k )\cdot v\}
+\end{equation}
+
+In order to find the paths that optimally convey the commodities that maximizes the total amount of commodity delivered from the source to destination, we can add a set of virtual sink nodes to the connection graph: for each commodity $k$, the virtual sink node will have an incoming edge of infinite capacity from every graph node that has the destination in the tuple. We claim that a maximum flow algorithm on the connection graph is equal to the maximum transmission capacity of the original network, i.e., is equal to the maximum total amount of commodities that can be transferred from source to destination,  as we prove below.
+
+\begin{theorem}
+A maximum flow from source to the virtual sink node in the connection graph represents the maximum transmission capacity in the original time schedule network, assuming that all MNs adhere to their regular schedules and that there is no commodity transmission loss.
+\end{theorem}
+
+\begin{proof}
+Assume that each commodity is partitioned into much smaller commodity packets of size $PS$, where $PS$ is less than the smallest capacity of an edge in the connection graph (which would trivially be true in practice). We argue that the max flow we obtain on the connection graph from the source to the virtual destination nodes indeed directly gives an optimal solution that maximizes the number of  packets sent from the respective commodity nodes to the destination. First note that the amount of flow that can leave any of the commodity nodes is at most equal to the respective commodity size, given the capacity of the edges out of the commodity node. Second, all the edges in the connection graph respect time, in the sense that they only connect connection and commodity nodes respecting the order that they occur in time; the edges also only exist when the two corresponding endpoints share a common object, so that a feasible sequence of commodity transfers is possible. Hence if break a flow in the connection graph as a superposition of we flow path for each commodity packet, we see that each of these commodity packet flow paths respect a sequence of valid transmission transfers for the commodity packet. Hence any flow in the network corresponds to a feasible routing scheme for all the commodity packets generated. Conversely, any routing scheme for the data packets can be converted into a feasible flow in the connection graph.
+Therefore, a maximum flow in the connection graph also gives us a solution that maximizes the number of commodity packets sent from their source to destination.
+\end{proof}
+
+Figure~\ref{fig:ConnectionGraphModel} shows an example of a connection graph and the respective maximum flow. We use a solid line to indicate the flow and a dashed line to indicate that the respective edge carries no flow. We omitted edges between connections representing the same pair of objects at different points in time since they are redundant. On each edge, there's a pair of numbers $a(b)$, where $a$ represents the capacity of the edge and $b$ is the actual flow on the edge. There are two commodities $F_1$ and $F_2$ and each commodity has size 1000B so they all have edges from the source node with capacity 1000B. File $F_1$ is generated from $PBS_1$ at time 2:00 so it has edges to connection node $C_2$, which contain $PBS_1$. The edge capacity is limited by the connection life (30 min) and transmission speed (10B/min) instead of file size 1000B. File $F_2$ is generated from $PBS_3$ at time 1:00 so it has edges to connection nodes $C_3$ and $C_6$, which contains $PBS_3$.
+
+When two connection nodes overlap, for example, node $C_2=<1,2,\mbox{3:00},\mbox{3:40}>$ and node $C_5=<2,5,\mbox{3:20},\mbox{4:00}>$, we need to subtract the overlap time, in this case, $20$ min so the lifetime of connection $C_2$ is $L(C_2)=20$ min and lifetime of connection $C_5$ is  $L(C_5)=20$ min. Hence, the capacity of the edge between $C_2$ and $C_5$ is $20$ min multiplied by the transmission speed (10B/min) which is equal to 200B. When running the max flow algorithm on this connection graph model, the resulting flow is 300B.
+
+Hence, we can see that, when we have limited connection time and transmission speed, the percentage of messages delivered successfully could be really low even when relying on an optimal, global max flow-based algorithm.
+
+\begin{figure*}[t]
+	\begin{center}
+		\begin{tabular}{c}
+			\psfig{figure=fig/example.eps,width=6.2in}
+		\end{tabular}
+		\vspace{-1.5in}
+		\caption{Example of connection graph and respective max flow}
+		\label{fig:ConnectionGraphModel}
+	\end{center}
+\end{figure*}
+
+
+
+We estimate the total time required to construct a connection graph from the given time schedule network, and also the amount of time necessary to run a ams flow algorithm on the connection graph, in terms of $m$, $n$, and $f$ (number of MNs, SNs, and commodities respectively).  Since we need to iterate through each connection node and each commodity node in order to establish the edges out of each node in the connection graph, the edge building process will take $O(k(k+f))$ time and the number of edges $|E| \leq (k(k+f))$ where $k$ is the number of connection nodes.
+We use the classical Edmonds Karp algorithm~\cite{edmonds}, so the running time is:
+$O(ke^2)=O(k(k(k+f))^2)=O(k^3(k+f)^2) =O(c^3m^3(m+n)^3(cm(m+n)+f)^2)=O(c^3m^6(m^2+f)^2)=O(Cm^6(m^4+2m^2f+f^2))$ where $c$ and $C$ are constants. Note that $n$ is relatively small compared to $m$. 
+%Since in our scenario both $m, n, f$ are not large numbers, we were able to use this approach for simulations that test the optimal capacity of the respective DTN network, as the size and numbers of files to be transmitted in the network increase (see Section~\ref{sec:maxflowexp}).
+}
+
+
+
+\section{Problem Statement} \label{problem}
+
+Assume that we are given a directed graph with a set of nodes $\mathcal N$ and edges $\mathcal M$, and we are also given a set of commodities $\mathcal F = \{F_1, ..., F_n\}$ with equal size $s$. Each commodity $F_i \in \mathcal F$ is a tuple $F_i=(sv_i, dv_i)$ where $sv_i, dv_i$ denote the source and destination for that commodity. Commodity $F_i$ is successfully transmitted if $s$ units of it are transmitted from $sv_i$ to $dv_i$
+%For each node $F_i=<s_i, d_i, Generate_i>$, we add a virtual source node $sv_i$ having an edge with capacity $s_g$ into file node $F_i$. And we add a virtual destination node $dv_i$ having an incoming edge of infinite capacity from all the connection nodes which contain $d_i$ as destinations. In this way we can model this problem as multi-commodity flow problem with $n$ different kinds of commodities with $n$ source and destination pairs of $(sv_i, dv_i)$. 
+Assume that all commodity can be fully fractionally delivered alone, which means each commodity can always be delivered in the form of splittable packets in the absence of other commodities. The goal is to maximize the number of commodities that could be potentially routed from their sources to destinations.
+
+
+
+\section{All-or-Nothing Splittable Multi-Commodity Flow} \label{sec:proposed}
+In this section, we will describe in details of the proposed random rounding based approach for solving the multi-commodity flow problem. 
+
+
+\textbf{Formulation 1}: Maximize the total number of commodities that can be successfully delivered.
+
+We use a variable $f_i$ to represent whether or not $F_i$ is successfully delivered. For the sake of simplicity, we rescale each commodity size and edge capacity in the network by $s$ so that this problem thus becomes an unit flow multi-commodity problem.
+
+%\begin{equation}
+%\begin{aligned}
+%\text{Input: Directed Connection Graph } &G(V, E), \text{File set } \mathcal{F} \text{ with } n \text{ files} \\
+%\text{Source-sink~pair }&(sv_i, dv_i) \text{ and threshold }\lambda, ~\forall F_i \in \mathcal{F} \\
+%\text{ Capacity }&c(u, v) ~~~~\forall (u, v)\in E \\
+%\text{Variable: Flow } &f_{i, (u, v)} ~~~~~~\forall F_i \in \mathcal{F}, (u, v) \in E \\
+%&f_i  ~~~~~~~~~~~~~\forall F_i \in \mathcal{F} \\
+%\text{Maximize } &\sum_{i=1}^{n}f_i \\ 
+%\text{Subject to } &\sum_{(sv_i,v) \in E}f_{i, (sv_i,v)} = f_i,  ~~~~~~~~~~~~\forall F_i \in \mathcal{F} \\
+%&\sum_{(u, v) \in E}f_{i,(u, v)} = \sum_{(v, u) \in E}f_{v, u}^i,  ~~\forall F_i \in \mathcal{F}, \forall v \in V - \{sv_i,dv_i\} \\ 
+%&\sum_{i=1}^{f}f_{i,(u, v)} \leq c_{(u, v)}, ~~~~~~~~~~~~~~~~\forall (u, v) \in E \\
+%&f_{(u, v)}^i \geq 0, ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\forall F_i \in \mathcal{F},  \forall (u, v) \in E \\
+%&f_i \in \{0, 1\} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\forall F_i \in \mathcal{F}
+%\end{aligned}
+%\end{equation}
+
+\begin{equation} \nonumber
+\begin{aligned}
+&\text{Input: Directed graph } G(V, E), \text{Commodities } \mathcal{F} = \{F_1, ..., F_n\} \\ \nonumber
+&\text{Source-sink~pair: }(sv_i, dv_i),~~~~~~~ \forall F_i \in \mathcal{F} \\ \nonumber
+&\text{Capacity: }c(u, v),~~~~~~~~~~~~~~~~~~~ \forall (u, v)\in E \\ \nonumber
+&\text{Variable: Flow } f_{i, (u, v)},~~~~~~~~~~~~~ \forall F_i \in \mathcal{F}, (u, v) \in E \\ \nonumber
+&~~~~~~~~~~~~~~~~~~f_i, ~~~~~~~~~~~~~~~~~~~\forall F_i \in \mathcal{F}  \nonumber
+\end{aligned}
+\end{equation}
+
+\begin{equation} \nonumber
+\begin{aligned}
+\text{Maximize } &\sum_{i=1}^{n}f_i \\  \nonumber
+\text{Subject to } &\sum_{(sv_i,v) \in E}f_{i, (sv_i,v)} = f_i,~~~~ \forall F_i \in \mathcal{F} \\ \nonumber
+&\sum_{(u, v) \in E}f_{i,(u, v)} = \sum_{(v, u) \in E}f_{v, u}^i, ~\forall F_i \in \mathcal{F}, ~ \forall v \in V - \{sv_i,dv_i\} \\  \nonumber
+&\sum_{i=1}^{f}f_{i,(u, v)} \leq c_{(u, v)},~~~~ \forall (u, v) \in E \\ \nonumber
+&f_{(u, v)}^i \geq 0,~~~~ \forall F_i \in \mathcal{F},  \forall (u, v) \in E \\ \nonumber
+&f_i \in \{0, 1\},~~~~ \forall F_i \in \mathcal{F} \nonumber
+\end{aligned}
+\end{equation}
+
+
+\begin{algorithm}[t]
+	\small
+	\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+	\renewcommand\algorithmicensure {\textbf{Output:} }
+	\caption{Random Rounding Algorithm for Formulation 1}
+	\label{alg:randomrounding}
+	\begin{algorithmic}[1] %Every Line has Number Label
+		\REQUIRE ~~\\ %Input
+		Directed Connection Graph $G(V, E)$;\\
+		Commodities $\mathcal{F} = \{F_1, ..., F_n\}$;\\
+		Source-sink pair $(sv_i, dv_i)$ for each $ F_i \in \mathcal{F}$;\\
+		Capacity $c(u, v), ~ \forall (u, v)\in E$;\\
+		\ENSURE ~~ $OPT_{ALG}$\\ 
+		%		 		\STATE Divide all edge capacities by $1+\epsilon$, where $\epsilon  \in [0, 1]$, i.e., $c_e = \frac{c_e}{(1+\epsilon)}$;
+		\STATE Change the last constraint to be 
+		$0 \leq f_i \leq 1$;
+		\STATE Then it is relaxed to an LP, solve this LP and get optimal solution $\tilde{f_i}$;
+		\STATE With probability $\tilde{f_i}$, set $f_i = 1$, otherwise set it to $0$;
+		\STATE Scale up the fractional flow $\tilde{f_{i,e}}$ from the LP solution on edge $e$ for commodity $i$ by $\frac{1}{\tilde{f_i}}$, i.e., $f_{i,e} = \tilde{f_{i,e}} \times \frac{1}{\tilde{f_i}}$, for $i$ s.t. $f_i = 1$;
+		\STATE If the solution is within a certain fraction of the optimal solution, return this solution, otherwise, repeat step 3 and 4, at most $N$ times.
+		
+	\end{algorithmic}
+\end{algorithm}
+
+Let $OPT_i$ be the optimal solution of the IP in Formulation 1, and let $OPT_f$ be the total amount of commodities delivered by solving the linear relaxation LP of IP in Formulation 1 where the variables $f_i$ are relaxed to assume any value in $[0, 1]$. It is obvious to see that $OPT_f = \sum{\tilde{f_i}}$. Define the solution from the above algorithm as $ALG$, and total amount of commodities delivered by $ALG$ as $OPT_{ALG}$. 
+
+We use Chernoff Bound over continuous random variables to bound the probability of achieving a fraction of the optimal solution.
+
+\textbf{Fact 1} (Chernoff-Bound)\label{CB} . Let $X=\sum_{i=1}^{n}X_i$ be a sum of n independent random variables $X_i \in [0,1], 1\le i \le n$. Then $P(X<(1-\epsilon) \cdot E(X)) \le exp(-\epsilon^2 \cdot E(X)/2)$ holds for $0 < \epsilon < 1$.
+
+Since we have already scaled down the flow by $s_r$, thus the variables are between 0 and 1 so that we can apply the above Chernoff Bound.
+
+\vspace*{0.15in}
+\textbf{Claim 2}. $Pr[OPT_{ALG} < (1-\epsilon) \cdot OPT_f] \le e^{-\epsilon^2 \cdot OPT_f / 2}$ 
+\vspace*{0.15in}
+
+\textbf{Proof}: For each commodity $i$, the expectation of $f_i$ is $E(f_i) = 1 \cdot \tilde{f_i} + 0 \cdot (1-\tilde{f_i}) = \tilde{f_i}$. Recall that $OPT_f = \sum{\tilde{f_i}} $, and let $OPT_{ALG} = \sum{f_i}$.
+
+\begin{flalign} \label{OPTALG}
+&Pr[OPT_{ALG}  < (1-\epsilon) \cdot OPT_f] \\ \nonumber
+&= Pr[\sum{f_i} < (1-\epsilon) \cdot OPT_f] \\ \nonumber
+&\le e^{-\epsilon^2 \cdot OPT_f / 2}  \,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\QEDB \nonumber
+\end{flalign}
+
+Since we also assume that all commodity can be fully fractionally delivered alone, therefore, we get:
+
+\begin{equation} \label{OPTF}
+OPT_{f} \ge 1
+\end{equation}
+
+Since we have proved that the optimal fractional solution is an upper bound on optimal solution for the ILP problem, by taking $\epsilon = 2/3$ in the Chernoff Bound, we get, 
+
+\textbf{Theorem 3}. The probability of achieving less than 1/3 of the profit of an optimal solution is upper bounded by $e^{-2/9} \approx 0.8007$.
+
+\textbf{Proof}.
+By taking $\epsilon = 2/3$, Equation \ref{OPTALG} becomes:
+
+\begin{eqnarray}
+Pr[OPT_{ALG}  < \frac{1}{3} \cdot OPT_f] &\le& e^{-(\frac{2}{3})^2 \cdot OPT_f / 2} \\
+&=& e^{-2 \cdot OPT_f/9}
+\end{eqnarray}
+
+By Equation \ref{OPTF}, we know that the minimum value of $OPT_f$ is 1, by taking $OPT_f = 1$, we get the upper bound of $e^{-\epsilon^2 \cdot OPT_f / 2}$. Therefore,
+
+\begin{equation}
+Pr[OPT_{ALG}  < \frac{1}{3} \cdot OPT_f] \le e^{-2/9}
+\end{equation}
+
+Since $OPT_i \le OPT_f$, thus we get, 
+\begin{equation}
+Pr[OPT_{ALG}  < \frac{1}{3} \cdot OPT_i] \le e^{-2/9}
+\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\QEDB \nonumber
+\end{equation}
+
+
+%If $OPT_f \cdot d > c_{min}$, where $d$ is the file size. Therefore, $OPT_f > \frac{c_{min}}{d} \ge \epsilon^{-2} \cdot n|E|$.  Then, $Pr[OPT_{ALG}  \ge \frac{1-\epsilon}{1+\epsilon} \cdot OPT_f]$ is at least $1-\frac{1}{poly(|E|)}$.
+
+%If $OPT_f \ge \alpha \cdot \ln f$, then, $Pr[OPT_{ALG}  \ge \frac{1-\epsilon}{1+\epsilon} \cdot OPT_f]$ is at least $1-\frac{1}{poly(f)}$.
+%
+%If $OPT_f < \alpha \cdot \ln f$, then, $OPT_{ALG} < \alpha \cdot \ln f$, even if we get 0 file, we are off from $OPT_f$ by no more than $\alpha \cdot \ln f$ additive factor. Putting it all together, with probability $1-\frac{1}{poly(f)}$, we get at least $\max\{0, (1-\epsilon)/(1+\epsilon) \cdot OPT_f - \alpha \ln f\}$.
+
+\vspace*{0.15in}
+\textbf{Fact 4} (Hoeffding's Inequality)\cite{Devdatt} . Let $\{X_i\}$ be independent random variables, s.t. $X_i \in [a_i, b_i]$, then $Pr(\sum_{i}X_i - E(\sum_{i}X_i ) \ge t) \le exp(-2t^2 / \sum_{i}(b_i-a_i)^2 )$ holds.
+
+\vspace*{0.15in}
+\textbf{Theorem 5} Given a single edge $e$ with capacity $c_e$, and let $\Delta_{F,e}$ be the commodities going through edge $e$. For all the commodity $i \in \Delta_{F,e}$, choose $\epsilon'$ such that $\sum_i \frac{\tilde{f_{i,e}}}{\tilde{f_i}} \le \epsilon' \cdot c_e$ .The probability that ALG exceeds the edge capacity constraint by a factor of $\gamma = (1+\epsilon' \cdot \sqrt{2\log|V|})$ is bounded by $|V|^{-4}$.
+\vspace*{0.15in}
+
+We analyze the probability that our algorithm violates capacity constraints by a certain factor, by employing Hoeffding's Inequality.
+
+Proof: Fix an edge $e \in E$, for commodity $i$, with probability $1-\tilde{f_i}$, the flow on edge $e$ for commodity $i$ is set to 0, i.e., $f_{i,e}=0$, with probability $\tilde{f_i}$, the flow on edge $e$ for commodity $i$ is set to $\tilde{f_{i,e}} \cdot \frac{1}{\tilde{f_i}}$. 
+
+Then the expectation of $f_{i,e}$ is 
+\begin{equation}
+E(f_{i,e}) = \tilde{f_{i,e}} \cdot \frac{1}{\tilde{f_i}} \cdot  \tilde{f_i}+ 0 \cdot (1-\tilde{f_i}) = \tilde{f_{i,e}}
+\end{equation}
+
+Let $F_e$ denotes the flow on edge $e$ by $ALG$, then $F_e = \sum_{i, f_{i,e} \neq 0}{f_{i,e}}$ and the expectation of $F_e$ is 
+\begin{equation} \label{expect}
+E[F_e] = \sum_{i, f_{i,e} \neq 0}\tilde{f_{i,e}} \cdot \frac{1}{\tilde{f_i}} \cdot  \tilde{f_i} = \sum_{i, f_{i,e} \neq 0}\tilde{f_{i,e}}
+\end{equation}
+
+Since we relax the LP, and a feasible solution must obey edge capacity constraint, so the cumulative load on edge $e$ is equal or less than the capacity of $e$:
+\begin{equation}
+\sum_{i, f_{i,e} \neq 0}\tilde{f_{i,e}} \le c_e
+\end{equation}
+
+Therefore, we can get the following:
+\begin{equation} \label{equ:edgecap}
+E[F_e] \le c_e
+\end{equation}
+%Let $\epsilon' = \frac{\epsilon}{\sqrt{2\log|V|\Delta_F}}$, since $\tilde{f_{i,e}} \ge \frac{1}{s}$, and $\tilde{f_{i,e}} \le c_e$, therefore, 
+%\begin{equation} \label{e3}
+%	\frac{\tilde{f_{i,e}}}{\tilde{f_{i,e}}} \le s \cdot c_e,
+%\end{equation}
+%since we choose $\epsilon \ge s \cdot \sqrt{2\log|V|f}$, and $f \ge \Delta_F$ thus, 
+%\begin{equation}\label{e4}
+%\epsilon' = \frac{\epsilon}{\sqrt{2\log|V|\Delta_F}} \ge \frac{s \cdot \sqrt{2\log|V|f}}{\sqrt{2\log|V|\Delta_F}} \ge s
+%\end{equation}
+%Given \ref{e3} and \ref{e4}, we can get
+%\begin{equation}
+%	\frac{\tilde{f_{i,e}}}{\tilde{f_{i,e}}} \le \epsilon' \cdot c_e,
+%\end{equation}
+
+
+Let $t=\epsilon' \cdot \sqrt{2\log|V|} \cdot c_e$, by applying Hoeffding's Inequality and since $\sum_i \frac{\tilde{f_{i,e}}}{\tilde{f_i}} \le \epsilon' \cdot c_e$, we get:
+
+\begin{eqnarray}
+Pr[F_e - E(F_e) \ge t] &\le& exp(\frac{-2t^2}{\sum_{i}(\frac{\tilde{f_{i,e}}}{\tilde{f_i}})^2}) \\ \nonumber
+&\le& exp(\frac{-2 \cdot \epsilon'^2 \cdot \log|V| \cdot c_e^2}{\epsilon'^2 \cdot c_e^2}) \\ \nonumber
+&=& |V|^{-4}
+\end{eqnarray}
+
+
+Given Equation \ref{equ:edgecap}, and let $\gamma = (1+\epsilon' \cdot \sqrt{2\log|V|})$,
+\begin{eqnarray} \nonumber
+&&Pr[F_e - c_e \ge \epsilon' \cdot \sqrt{2\log|V|} \cdot c_e] \\ \nonumber
+&=& Pr[F_e \ge (1+\epsilon' \cdot \sqrt{2\log|V|}) \cdot c_e] \\ \nonumber
+&=& Pr[F_e \ge \gamma \cdot c_e] \\ \nonumber
+&\le& |V|^{-4} \,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\, \QEDB
+\end{eqnarray}
+
+%Let $X_j = \frac{f_{j,e}}{d}$, then, $F(e) \ge (1+\epsilon) \cdot c_e$ iff
+%
+%$\sum_{j, f_{j,e} \neq 0}X_j \ge (1+\epsilon) \cdot \frac{c_e}{d}$.  
+%Therefore, 
+%$Pr[F(e) \ge (1+\epsilon) \cdot c_e] \le e^{-\beta(\epsilon) \cdot \tilde{
+%c_e}/d}$. By scaling up the capacities by $\epsilon$, i.e., $c_e = (1+\epsilon) \cdot c_e$, and $\beta(\epsilon) \ge \frac{2 \epsilon^2}{4.2+\epsilon}$, and by assumption $c_e/d \ge \frac{4.2+\epsilon}{\epsilon^2} \cdot ln|E| $, we have  $Pr[F(e) \ge c_e] \le \frac{1}{|E|^2}$. 
+
+There are at most $|V|^2$ edges, by applying union bound over all edges using Theorem 5, hence we obtain the following corollary.
+
+\textbf{Corollary 6} The probability that ALG exceeds any of the edge capacity constraints by a factor of $\gamma = (1+\epsilon' \cdot \sqrt{2\log|V|})$ is upper bounded by $|V|^{-2}$.
+
+Based on Theorem 3 and Corollary 6, if $|V| \ge 3$ holds, the probability of not finding a suitable solution, satisfying the objective and the capacity constraint, within a single round is therefore upper bounded by $exp(−2/9) + 1/9 \le 11/12$, . The probability to find a suitable solution within $N$ many rounds is then lower bounded by $1 - (11/12)^N$ for $|V| \ge 3$ and hence the randomized rounding scheme yields a solution with high probability. 
+
+
+
+\section{Experimental Evaluations}
+In this section, we will evaluate our proposed algorithm on both real world dataset and synthetic dataset. 
+
+\subsection{Real World Dataset: Amazon Delta Region}
+
+\subsubsection{Connection Graph Model}
+
+In order to evaluate on the real world traces, we employ the scenario described in \cite{LiuJAERC15} and create a connection graph model that transforms the original dynamic node network into a contact based connectivity graph.
+
+Denote by $\cal B$=$\{B_1,B_2,B_3, ... ,B_m\}$ and $\cal P$=$\{P_1,P_2,P_3, ... ,P_n\}$ the sets of $m$ boats and the set of $n$ PBSs in the CoDPON network, respectively. We assume both the boats and the PBSs have infinite buffer sizes\footnote{A reasonable assumption, given the ever-dropping costs of memory and also the much more stringent data transmission bottlenecks due to boat-to-boat transmission while in transit.}. Let $DP_{B_i}$ be the displacement plan associated with each boat $B_i$, which describes the routing paths and times to arrive and depart the PBSs (we assume that each boat has full knowledge of its own displacement plan). A connection is established between two boats $B_i$ and $B_j$ at time $t$ if and only if their geographical distance is within a certain constant range $r_{i,j,t}$ at time $t$. Note that the ranges $r_{i,j,t}$ may be all different depending on the particular boats and the time (which also determine location) of the connection. However, without loss of generality and for ease of explanation, we will assume that $r_{i,j,t}=r$, for all $i,j,t$.  Given also the sparsity of our network scenario, we will ignore considerations of interference of the wireless signal in this work, but we do assume that all communications are half-duplex (i.e., a node can either transmit or receive at a time). Hence a connection exists between $B_i$ and $B_j$ at time $t$ if and only if: $\sqrt{(x_i - x_j)^2 + (y_i - y_j)^2} \leq r$, where $(x_z,y_z)$ are the coordinates of the respective boat  $B_z$ and $(x_j,y_j)$ at time $t$.
+
+Based on the original boat displacement plans, we can then determine all boat-to-boat and boat-to-PBS connections $\cal C$=$\{C_1,C_2,C_3, ... ,C_k\}$ where $k \leq cm(m+n)$ and $c$ is a constant.
+
+We can represent each connection $C_i$ as a 4-tuple $<A_i, B_i, Up_i, Down_i>$, where $A_i$ and $B_i$ are the two objects (each object is either a boat or PBS) that establish this connection, $Up_i$ is the starting time of the connection, and $Down_i$ is the ending time of the connection.
+
+We construct the directed connection graph using boat-to-boat and boat-to-PBS connections and files as nodes, therefore the node set is $V = {\cal C} \cup {\cal F}$ and $|V|=(k+f)$. A directed edge exists from connection node $C_x$ to connection node $C_y$ if and only if the two connections share a common object and $Up_x \le Down_y$. For example, there is an edge from a connection node $<1, 2, 300, 400>$ to a connection node $<2, 5, 500, 600>$ since they share the common object $2$ and $300 \le 600$. The capacity of an edge $e_i=(C_x,C_y)$ is defined as
+\begin{equation} \nonumber
+Cap_{e_i} = min\{M(A_x,B_x),M(A_y,B_y)\}
+\end{equation}
+where $M(A_x,B_x) = L(C_x) \cdot v$,  $v$ is the data transfer speed (we assume it to be a constant in the absence of decent weather conditions), and $L(C_x)=Down_x-Up_x$ is the lifetime of $C_x$.
+
+When two connections with at least one object in common overlap in time, we will take a conservative approach and assume that overlapping transmissions from  two respective connections collide (generate interference) and hence that during the overlap time no successful transmissions occur for these connections. Hence, whenever two connections that share an object overlap, we will not count the overlap time when computing the capacity of the edge between them.
+
+Now we consider the edges in the graph between a file node and a connection node. WE represent each file $F_k$ as a node $F_k=<p_k,Generate_k>$, where $p_k$ is the PBS of the respective community where $F_k$ was generated, and $Generate_k$ is the time when $F_k$  was generated. There will be an edge from $F_k$ to connection node $C_x=<A_x, B_x, Up_x, Down_x>$ if and only if $p_k = A_x$ or $p_k = B_x$, and $Generate_k \leq Down_x$. The capacity of a file-connection edge $(F_k,C_x)$ is calculated as:
+
+\begin{equation} \nonumber
+Cap_{(F_k,C_x)} = min \{FileSize, (Down_x-Generate_k )\cdot v\}
+\end{equation}
+
+
+Then, we can transform the original dynamic network into the connection graph model, which is a static network, and our proposed method can be directly applied.
+
+
+
+\subsection{Synthetic Data}
+
+
+
+
+\section{Conclusions}\label{sec:concl}
+
+Realizing the challenge of 
+
+
+\bibliographystyle{IEEEtranS}
+\bibliography{IEEEabrv,references}
+
+
+\end{document}
+
+
+
+
+%\bibliographystyle{alpha}
+%\begin{thebibliography}
+%
+%
+%
+%\bibitem{9} Large-treewidth graph decompositions and applications
+%
+%\bibitem{10} Near-optimal hardness results and approximation algorithms for edge-disjoint paths and related problems
+%
+%\bibitem{11} Approximation Algorithms for the Unsplittable Flow Problem
+%
+%\bibitem{12} Chekuri, Chandra, Sanjeev Khanna, and F. Bruce Shepherd. "The all-or-nothing multicommodity flow problem." SIAM Journal on Computing 42.4 (2013): 1467-1493.
+%	
+%	
+%\end{thebibliography}
+
