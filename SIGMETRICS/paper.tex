@@ -370,6 +370,8 @@ In this section, we will evaluate our proposed algorithm on both real world data
 
 \subsection{Real World Dataset: Amazon Delta Region}
 
+In this section, we will briefly describe the scenario of Amazon Delta Region, where the proposed method could be applied in order to delivery data files from remote communities to the main city.
+
 \subsubsection{Connection Graph Model}
 
 In order to evaluate on the real world traces, we employ the scenario described in \cite{LiuJAERC15} and create a connection graph model that transforms the original dynamic node network into a contact based connectivity graph.
@@ -398,9 +400,58 @@ Cap_{(F_k,C_x)} = min \{FileSize, (Down_x-Generate_k )\cdot v\}
 Then, we can transform the original dynamic network into the connection graph model, which is a static network, and our proposed method can be directly applied.
 
 
+\subsubsection{Results for Amazon Scenario}
+
+In the Amazon Scenario, we first randomly generate 50 files, with a time interval of 374 seconds, so basically since the Amazon network is a time expanded graph, which nodes are connected obeying time sequences, the file also comes with a generation time. We created the connection graph that is discussed above and connect the commodity nodes with connection nodes. For each commodity, we create a super sink, connecting to all the connection nodes, that could potentially deliver the commodity to its destination. 
+
+After creating the connection graph with commodity nodes and their corresponding super sink nodes, there are 449 connection nodes, 48 commodity nodes with 48 super sink nodes. Total number of edge is around 16000 and the edge capacity varies from 200 to 400000 due to different time schedules. 
+
 
 \subsection{Synthetic Data}
 
+In this section, we will discuss how the proposed method perform on the synthetic data obtained from \cite{sndlib}. 
+
+\subsubsection{Germany50 Network}
+
+We obtained the Germany50 network from SNDlib, the property of the network is as follows, in this network, there are 50 nodes and 88 edges, and number of commodities is 662. The average node degree is 3.52. The edge capacity of each edge is 40, and in order to test the proposed method, we set the commodity size to be 50.  
+
+\subsubsection{Results for Germany50 Network}
+
+We first solve the LP formulation and then use the random rounding to select the commodities to deliver and then check the edge constraints to see if any edge constraint is violated, we repeated the random rounding process, and report the following 3 statistics: average edge capacity violation, the number of files delivered after random rounding, and the least number of edge capacity violation histogram. Note that according to our assumption, the violation ratio can be $\log|V| \cdot |\Delta_{F}|$, which is roughly 71.9.
+
+Figure \ref{fig:violation} shows the histogram of average edge capacity violation for 100 runs, basically the x axis shows that the number of times of capacity violation, as we can see from the histogram, most of the violations are under 1.5 and very few are above 2. This means that even though some of the edge did violate the capacity constraints, but it is much smaller compared to the assumed violation ratio
+
+\begin{figure}
+	\begin{center}
+		\psfig{figure=fig/violation.png, height=2.5in, width=3.6in}
+		\caption{Average Edge Capacity Violation for 100 Runs}
+		\label{fig:violation}
+	\end{center}
+\end{figure}
+
+
+Figure \ref{fig:obj_value} shows the histogram of the number of files that are delivered after the random rounding process, the optimal solution returned by the LP solver is 70.4, and we can see here roughly half of the runs, the random rounded solution is better than LP optimal solution with edge capacity violation. 
+
+
+\begin{figure}
+	\begin{center}
+		\psfig{figure=fig/obj_value.png, height=2.5in, width=3.6in}
+		\caption{Number of Files Delivered after Random Rounding}
+		\label{fig:obj_value}
+	\end{center}
+\end{figure}
+
+
+Figure \ref{fig:best} shows the least edge violation among these 100 runs, the number of files delivered after random rounding process is 53, which is 17 less compared to the LP solution, it only has 53 violations and most of the violations happen at 1.1 and 1.3 times.
+
+
+\begin{figure}
+	\begin{center}
+		\psfig{figure=fig/best.png, height=2.5in, width=3.6in}
+		\caption{Least number of Edge Capacity Violation}
+		\label{fig:best}
+	\end{center}
+\end{figure}
 
 
 
